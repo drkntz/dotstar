@@ -9,6 +9,7 @@ To use this driver, simply #include "dotstar.h" and provide the driver with an a
 Example using MCC-generated SPI driver:
 ```
 #include "dotstar/dotstar.h"
+#include "mcc_generated_files/mcc.h" // contains spi1 driver set to 1MHz
 
 void main(void)
 {
