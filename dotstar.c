@@ -12,7 +12,7 @@
 */
 
 #include "dotstar.h"
-#include "mcc_generated_files/mcc.h"
+
 typedef struct _BRGB{
     uint8_t brightness;
     uint8_t blue;
@@ -22,9 +22,13 @@ typedef struct _BRGB{
 
 struct _BRGB _led_data[NUM_LEDS];
 
-void dotstar_setup(void)
+// spi driver function
+void (*spi_writeblock)(void*, size_t);
+
+// Setup which spi interface we will be using
+void dotstar_setup(void(*block_write_func)(void*, size_t))
 {
-    // Nothing for now
+	spi_writeblock = block_write_func;
 }
 
 void dotstar_close(void)
@@ -75,16 +79,16 @@ void dotstar_show(void)
       0xFF,
       0xFF 
     };
-    SPI1_WriteBlock(start_packet, 4);
+    spi_writeblock(start_packet, 4);
     
     for(i = 0; i < NUM_LEDS; i++)
     {
-        SPI1_WriteBlock(&_led_data[i].brightness, 1);
-        SPI1_WriteBlock(&_led_data[i].blue, 1);
-        SPI1_WriteBlock(&_led_data[i].green, 1);
-        SPI1_WriteBlock(&_led_data[i].red, 1);        
+        spi_writeblock(&_led_data[i].brightness, 1);
+        spi_writeblock(&_led_data[i].blue, 1);
+        spi_writeblock(&_led_data[i].green, 1);
+        spi_writeblock(&_led_data[i].red, 1);        
     }
-    SPI1_WriteBlock(end_packet, 4);
+    spi_writeblock(end_packet, 4);
 }
 
 // Clear LEDs in ram
@@ -150,7 +154,7 @@ void dotstar_chase(void)
     red = 75;
     dotstar_set_all(0x00, 0x00, 0x01);
     
-    dotstar_set_pixel(head, red, green, blue);
+    dotstar_set_pixel((uint8_t)head, red, green, blue);
     
     for(i = 1; i < 6; i++)
     {
@@ -158,11 +162,11 @@ void dotstar_chase(void)
         blue = blue - 20;
         if((head - i ) < 0)
         {
-            dotstar_set_pixel(NUM_LEDS + (head - i),  red, green, blue);
+            dotstar_set_pixel((uint8_t)(NUM_LEDS + (head - i)),  red, green, blue);
         }
         else
         {
-            dotstar_set_pixel(head - i, red, green, blue);
+            dotstar_set_pixel((uint8_t)(head - i), red, green, blue);
         }
     }
     
@@ -188,7 +192,7 @@ void spiral_clockwise(void)
     
     for(j = 0; j < 4; j++)
     {
-        dotstar_set_pixel(nexthead, red, green, blue);
+        dotstar_set_pixel((uint8_t)(nexthead), red, green, blue);
 
         if(nexthead+4 >= NUM_LEDS) nexthead = 4 - (NUM_LEDS - nexthead);
         else nexthead += 4;
@@ -217,7 +221,7 @@ void spiral_counterclockwise(void)
     for(j = 0; j < 4; j++)
     {
 
-        dotstar_set_pixel(nexthead, red, green, blue);
+        dotstar_set_pixel((uint8_t)(nexthead), red, green, blue);
 
         if(nexthead-4 < 0) nexthead = (NUM_LEDS - 4) + nexthead;
         else nexthead -= 4;
